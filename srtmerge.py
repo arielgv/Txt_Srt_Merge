@@ -45,21 +45,31 @@ def merge_srt_and_txt(srt_data, txt_data):
 
     return merged_data
 
-def merge_srt_and_txt_method_2(srt_data, txt_data):
+def merge_srt_and_txt_method_2(srt_data, txt_data, margin):
     merged_data = []
-    margin = 1.0  # Margin of error in seconds
+    margin = 2.6  # Margin of error in seconds
+    last_speaker_label = None
+
+    def srt_time_to_seconds(srt_time):
+        hours, minutes, seconds = map(float, srt_time.replace(',', '.').split(':'))
+        return hours * 3600 + minutes * 60 + seconds
 
     for srt_item in srt_data:
-        srt_start_time = float(srt_item['start'].replace(',', '.').split(':')[-1])
+        srt_start_time = srt_time_to_seconds(srt_item['start'])
+        speaker_label = None
 
-        
-        filtered_txt_data = [item for item in txt_data if abs(srt_start_time - item['start']) <= margin]
+        for txt_item in txt_data:
+            if abs(srt_start_time - txt_item['start']) <= margin:
+                speaker_label = txt_item['speaker'].replace('speaker_', '')
+                last_speaker_label = speaker_label
+                break
 
-        if filtered_txt_data:
-            
-            speaker = min(filtered_txt_data, key=lambda x: abs(srt_start_time - x['start']))
-            speaker_label = speaker['speaker'].replace('speaker_', '')
+        # Si la línea de diálogo no tiene un speaker, usar el último speaker encontrado
+        if not speaker_label and last_speaker_label:
+            speaker_label = last_speaker_label
 
+        # Agregar el speaker a la línea de diálogo si se encontró uno
+        if speaker_label:
             merged_data.append({
                 'index': srt_item['index'],
                 'start': srt_item['start'],
@@ -67,7 +77,6 @@ def merge_srt_and_txt_method_2(srt_data, txt_data):
                 'text': f'{speaker_label}: {srt_item["text"]}'
             })
         else:
-            
             merged_data.append({
                 'index': srt_item['index'],
                 'start': srt_item['start'],
@@ -102,14 +111,19 @@ def load_srt_file():
         files_loaded_label.config(text="TXT and SRT files loaded and ready")
 
 def preview_merged_file():
-    global srt_filename, txt_filename, method_var
+    global srt_filename, txt_filename, margin_entry
     srt_data = parse_srt(srt_filename)
     txt_data = parse_txt(txt_filename)
+
+    try:
+        margin = float(margin_entry.get())
+    except ValueError:
+        messagebox.showerror("Error", "Please enter a valid number for the error margin")
+        return
     
-    if not method_var.get():
-        merged_data = merge_srt_and_txt(srt_data, txt_data)
-    else:
-        merged_data = merge_srt_and_txt_method_2(srt_data, txt_data)
+    merged_data = merge_srt_and_txt_method_2(srt_data, txt_data, margin)
+    
+    
 
     # Create the preview window
     preview_window = tk.Toplevel(app)
@@ -132,14 +146,17 @@ def preview_merged_file():
     preview_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
 def merge_files():
-    global srt_filename, txt_filename, method_var
+    global srt_filename, txt_filename, margin_entry
     srt_data = parse_srt(srt_filename)
     txt_data = parse_txt(txt_filename)
+
+    try:
+        margin = float(margin_entry.get())
+    except ValueError:
+        messagebox.showerror("Error", "Please enter a valid number for the error margin")
+        return
     
-    if not method_var.get():
-        merged_data = merge_srt_and_txt(srt_data, txt_data)
-    else:
-        merged_data = merge_srt_and_txt_method_2(srt_data, txt_data)
+    merged_data = merge_srt_and_txt_method_2(srt_data, txt_data, margin)
         
     output_filename = f"merged_{srt_filename.split('/')[-1]}"
     save_merged_srt(merged_data, output_filename)
@@ -148,9 +165,14 @@ def merge_files():
 # Create the tkinter app
 app = tk.Tk()
 app.title("SRT Merger")
-app.geometry("400x300")
+app.geometry("480x390")
 
 # Create and place the widgets
+error_margin_label = tk.Label(app, text="Error margin (sec):")
+error_margin_label.pack(pady=10)
+margin_entry = tk.Entry(app)
+margin_entry.pack(pady=10)
+margin_entry.insert(0, "2.5")  # Default value
 load_txt_button = tk.Button(app, text="Load TXT file", command=load_txt_file)
 load_txt_button.pack(pady=10)
 
@@ -160,17 +182,20 @@ load_srt_button.pack(pady=10)
 files_loaded_label = tk.Label(app, text="")
 files_loaded_label.pack(pady=10)
 
-method_var = tk.BooleanVar()
+#method_var = tk.BooleanVar()
 #method_var.set("Method 1")
 
-method_checkbox = tk.Checkbutton(app, text="Use Method 2: Time accuracy", variable=method_var, onvalue=True, offvalue=False)
-method_checkbox.pack(pady=10)
+#method_checkbox = tk.Checkbutton(app, text="Use Method 2: Time accuracy", variable=method_var, onvalue=True, offvalue=False)
+#method_checkbox.pack(pady=10)
 
 preview_button = tk.Button(app, text="Preview", state=tk.DISABLED, command=preview_merged_file)
 preview_button.pack(pady=10)
 
 merge_button = tk.Button(app, text="Merge", state=tk.DISABLED, command=merge_files)
 merge_button.pack(pady=10)
+
+error_margin_label = tk.Label(app, text="2.5 sec error margin")
+error_margin_label.pack(pady=10)
 
 # Add the following line to keep the window open
 app.mainloop()
