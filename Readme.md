@@ -1,15 +1,9 @@
-
 # SRT Merger
 for Jiten.
 
-
-SRT Merger is a Python script that allows you to merge a TXT file containing the transcript of a video with an SRT subtitle file. The script provides two methods for merging the files, each with different levels of compatibility and time accuracy.
-
-
-
+SRT Merger is a Python script that allows you to merge a TXT file containing the transcript of a video with an SRT subtitle file. The script uses a method with an adjustable error margin for merging the files, providing a balance between compatibility and time accuracy.
 
 ## Usage/Examples
-
 
 Download the script by clicking on the green "Code" button and selecting "Download ZIP". Unzip the file to your desired location.
 
@@ -22,14 +16,13 @@ Run the script by executing the command
 python srtmerge.py
 ``` 
 
-
 Click the *"Load TXT file"* button to select and load your TXT file.
 
 Click the *"Load SRT file"* button to select and load your SRT file.
 
 Once both files are loaded, the *"Preview"* and *"Merge"* buttons will become available.
 
-Select the desired merging method from check menu.
+Enter the desired error margin (in seconds) in the "Error Margin" entry field. This value will be used when merging the files.
 
 Click the "Preview" button to preview the merged SRT file.
 
@@ -39,9 +32,7 @@ Click the "Merge" button to create the merged SRT file. The merged file will be 
 
 When loading files, a label confirming the selected files will be displayed next to the corresponding button. This is to help you keep track of the files you have loaded.
 
-
 ## 🚀 About Me
-
 
 ## Authors
 
